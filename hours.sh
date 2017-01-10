@@ -16,6 +16,21 @@ test "$DATA_DIR" != "" || \
 test -d "$DATA_DIR" || \
   die "DATA_DIR=$DATA_DIR is not a directory; run \`mkdir -p $DATA_DIR\` to correct it"
 
+DATE=`date +%Y-%m-%d`
+TIME=`date +%H:%M`
+
+YEAR=`date +%Y`
+MONTH=`date +%m`
+DAY=`date +%d`
+HOUR=`date +%H`
+MINUTE=`date +%M`
+
+YEAR_DIR="$DATA_DIR/$YEAR"
+mkdir -p "$YEAR_DIR"
+
+MONTH_FILE="$YEAR_DIR/$MONTH.log"
+test -f "$MONTH_FILE" || touch "$MONTH_FILE"
+
 PRG=$0
 
 usage() {
