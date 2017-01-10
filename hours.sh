@@ -59,6 +59,14 @@ case "$CMD" in
   today)
     egrep "$DATE [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | print_total
     ;;
+  month)
+    for DAY in `cut -d" " -f1 $MONTH_FILE | sort | uniq`
+    do
+      WORK=`egrep "$DAY [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | print_total`
+      echo "$DAY $WORK"
+    done
+    echo "TOTAL: "`cat $MONTH_FILE | print_total`
+    ;;
   *)
     echo "unknown command: $CMD" >&2
     echo "" >&2
