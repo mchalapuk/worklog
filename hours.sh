@@ -51,7 +51,7 @@ print_total() {
     total += (to[1]*60 + to[2]) - (from[1]*60 + from[2]);
   }
   END {
-    printf "%d:%d\n", total/60, total%60
+    printf "%02d:%02d\n", total/60, total%60
   }'
 }
 
@@ -60,12 +60,15 @@ case "$CMD" in
     egrep "$DATE [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | print_total
     ;;
   month)
+    echo "-----------+------"
     for DAY in `cut -d" " -f1 $MONTH_FILE | sort | uniq`
     do
       WORK=`egrep "$DAY [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | print_total`
-      echo "$DAY $WORK"
+      echo "$DAY   $WORK"
     done
-    echo "TOTAL: "`cat $MONTH_FILE | print_total`
+    echo "-----------+------"
+    echo "TOTAL        "`cat $MONTH_FILE | print_total`
+    echo "-----------+------"
     ;;
   *)
     echo "unknown command: $CMD" >&2
