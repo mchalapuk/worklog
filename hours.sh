@@ -1,5 +1,7 @@
 #!/bin/bash
 
+#set -x
+
 die() {
   echo "$@" >&2
   exit 1
@@ -39,9 +41,24 @@ usage() {
   echo "  Commands:"
 }
 
-CMD=`shift`
+CMD=$1
+shift
+
+print_total() {
+  awk '{
+    split($2, from, ":");
+    split($3, to, ":");
+    total += (to[1]*60 + to[2]) - (from[1]*60 + from[2]);
+  }
+  END {
+    printf "%d:%d\n", total/60, total%60
+  }'
+}
 
 case "$CMD" in
+  today)
+    egrep "$DATE [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | print_total
+    ;;
   *)
     echo "unknown command: $CMD" >&2
     echo "" >&2
