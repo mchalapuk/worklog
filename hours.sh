@@ -44,30 +44,47 @@ usage() {
 CMD=$1
 shift
 
-print_total() {
+total() {
   awk '{
     split($2, from, ":");
     split($3, to, ":");
     total += (to[1]*60 + to[2]) - (from[1]*60 + from[2]);
   }
   END {
-    printf "%02d:%02d\n", total/60, total%60
+    printf "%d", total*60
   }'
+}
+
+pretty_print() {
+  DAYS=$[`date --utc -d @$1 +%j`-1]
+  HOURS=$[`date --utc -d @$1 +%_H`+$[DAYS*24]]
+  if [ $HOURS -lt 10 ]
+  then
+    HOURS="0$HOURS"
+  fi
+  MINUTES=`date --utc -d @$1 +%M`
+  echo $HOURS:$MINUTES
 }
 
 case "$CMD" in
   today)
-    egrep "$DATE [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | print_total
+    WORK=`egrep "$DATE [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | total`
+    pretty_print $WORK
     ;;
   month)
     echo "-----------+------"
+    echo "date            wh"
+    echo "-----------+------"
+    DAY_COUNT=0
     for DAY in `cut -d" " -f1 $MONTH_FILE | sort | uniq`
     do
-      WORK=`egrep "$DAY [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | print_total`
-      echo "$DAY   $WORK"
+      WORK=`egrep "$DAY [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | total`
+      echo "$DAY   `pretty_print $WORK`"
+      DAY_COUNT=$[$DAY_COUNT+1]
     done
+    TOTAL=`cat $MONTH_FILE | total`
     echo "-----------+------"
-    echo "TOTAL        "`cat $MONTH_FILE | print_total`
+    echo "TOTAL        `pretty_print $TOTAL`"
     echo "-----------+------"
     ;;
   *)
