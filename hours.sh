@@ -66,6 +66,15 @@ pretty_print() {
   echo $HOURS:$MINUTES
 }
 
+diff() {
+  RETVAL=$[$1-$2]
+  if [ $RETVAL -ge 0 ]
+  then
+    RETVAL="+$RETVAL"
+  fi
+  echo $RETVAL
+}
+
 case "$CMD" in
   today)
     WORK=`egrep "$DATE [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | total`
@@ -75,16 +84,20 @@ case "$CMD" in
     echo "-----------+------"
     echo "date            wh"
     echo "-----------+------"
+
     DAY_COUNT=0
     for DAY in `cut -d" " -f1 $MONTH_FILE | sort | uniq`
     do
       WORK=`egrep "$DAY [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | total`
-      echo "$DAY   `pretty_print $WORK`"
+      DIFF=`diff $WORK 8`
+      echo "$DAY   `pretty_print $WORK` `pretty_print $DIFF`"
       DAY_COUNT=$[$DAY_COUNT+1]
     done
+
     TOTAL=`cat $MONTH_FILE | total`
+    DIFF=`diff $TOTAL $[$DAY_COUNT*8]`
     echo "-----------+------"
-    echo "TOTAL        `pretty_print $TOTAL`"
+    echo "TOTAL        `pretty_print $TOTAL` `pretty_print $DIFF`"
     echo "-----------+------"
     ;;
   *)
