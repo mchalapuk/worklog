@@ -56,49 +56,59 @@ total() {
 }
 
 pretty_print() {
-  DAYS=$[`date --utc -d @$1 +%j`-1]
-  HOURS=$[`date --utc -d @$1 +%_H`+$[DAYS*24]]
+  if [ $1 -lt 0 ]
+  then
+    TS=`echo $1 | cut -d"-" -f2`
+    PREFIX="-"
+  else
+    TS=$1
+    PREFIX=" "
+  fi
+
+  DAYS=$[`date --utc -d @$TS +%j`-1]
+  HOURS=$[`date --utc -d @$TS +%_H`+$[DAYS*24]]
   if [ $HOURS -lt 10 ]
   then
     HOURS="0$HOURS"
   fi
-  MINUTES=`date --utc -d @$1 +%M`
-  echo $HOURS:$MINUTES
+  MINUTES=`date --utc -d @$TS +%M`
+  echo "$PREFIX$HOURS:$MINUTES"
 }
 
 diff() {
-  RETVAL=$[$1-$2]
-  if [ $RETVAL -ge 0 ]
-  then
-    RETVAL="+$RETVAL"
-  fi
+  RETVAL=$[$1 - $2]
   echo $RETVAL
+}
+
+timestamp_from_workdays() {
+  echo $[$1*8*60*60]
 }
 
 case "$CMD" in
   today)
     WORK=`egrep "$DATE [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | total`
-    pretty_print $WORK
+    DIFF=`diff $WORK $(timestamp_from_workdays 1)`
+    echo "$DAY  `pretty_print $WORK`  `pretty_print $DIFF`"
     ;;
   month)
-    echo "-----------+------"
-    echo "date            wh"
-    echo "-----------+------"
+    echo "-----------+-------+-------"
+    echo "date            wh     diff"
+    echo "-----------+-------+-------"
 
     DAY_COUNT=0
     for DAY in `cut -d" " -f1 $MONTH_FILE | sort | uniq`
     do
       WORK=`egrep "$DAY [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | total`
-      DIFF=`diff $WORK 8`
-      echo "$DAY   `pretty_print $WORK` `pretty_print $DIFF`"
+      DIFF=`diff $WORK $(timestamp_from_workdays 1)`
+      echo "$DAY  `pretty_print $WORK`   `pretty_print $DIFF`"
       DAY_COUNT=$[$DAY_COUNT+1]
     done
 
     TOTAL=`cat $MONTH_FILE | total`
-    DIFF=`diff $TOTAL $[$DAY_COUNT*8]`
-    echo "-----------+------"
-    echo "TOTAL        `pretty_print $TOTAL` `pretty_print $DIFF`"
-    echo "-----------+------"
+    DIFF=`diff $TOTAL $(timestamp_from_workdays $DAY_COUNT)`
+    echo "-----------+-------+-------"
+    echo "TOTAL        `pretty_print $TOTAL`  `pretty_print $DIFF`"
+    echo "-----------+-------+-------"
     ;;
   *)
     echo "unknown command: $CMD" >&2
