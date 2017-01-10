@@ -13,4 +13,6 @@ test -f "$CONFIG_FILE" || \
 test "$DATA_DIR" != "" || \
   die "DATA_DIR variable not defined; please add it to $CONFIG_FILE"
 
+test -d "$DATA_DIR" || \
+  die "DATA_DIR=$DATA_DIR is not a directory; run \`mkdir -p $DATA_DIR\` to correct it"
 
