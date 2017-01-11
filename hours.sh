@@ -86,7 +86,7 @@ timestamp_from_workdays() {
 
 case "$CMD" in
   today)
-    WORK=`egrep "$DATE [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | total`
+    WORK=`egrep "$DATE .*:.* .*:.*" "$MONTH_FILE" | total`
     DIFF=`diff $WORK $(timestamp_from_workdays 1)`
     echo "$DAY  `pretty_print $WORK`  `pretty_print $DIFF`"
     ;;
@@ -98,7 +98,7 @@ case "$CMD" in
     DAY_COUNT=0
     for DAY in `cut -d" " -f1 $MONTH_FILE | sort | uniq`
     do
-      WORK=`egrep "$DAY [0-9]{2}:[0-9]{2} [0-9]{2}:[0-9]{2}" "$MONTH_FILE" | total`
+      WORK=`egrep "$DAY .*:.* .*:.*" "$MONTH_FILE" | total`
       DIFF=`diff $WORK $(timestamp_from_workdays 1)`
       echo "$DAY  `pretty_print $WORK`   `pretty_print $DIFF`"
       DAY_COUNT=$[$DAY_COUNT+1]
