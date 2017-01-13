@@ -87,8 +87,14 @@ workseconds_from_calendar_days() {
 case "$CMD" in
   today)
     WORK=`egrep "$DATE .*:.* .*:.*" "$MONTH_FILE" | total`
+    LAST_IN=`tail -n1 "$MONTH_FILE" | egrep "$DATE +[0-9]+:[0-9]+"`
+    if [ -n LAST_IN ]
+    then
+      UNTIL_CURRENT_TIME=`echo "$LAST_IN $TIME" | total`
+      WORK=$[$WORK + $UNTIL_CURRENT_TIME]
+    fi
     DIFF=`diff $WORK $(workseconds_from_calendar_days 1)`
-    echo "$DATE  `pretty_print $WORK`  `pretty_print $DIFF`"
+    echo "$DATE  `pretty_print $WORK`   `pretty_print $DIFF`"
     ;;
   month)
     echo "-----------+-------+-------"
@@ -96,19 +102,32 @@ case "$CMD" in
     echo "-----------+-------+-------"
 
     DAY_COUNT=0
+    TOTAL=0
     for DAY in `cut -d" " -f1 $MONTH_FILE | sort | uniq`
     do
       WORK=`egrep "$DAY .*:.* .*:.*" "$MONTH_FILE" | total`
+      if [ $DAY == $DATE ]
+      then
+        LAST_IN=`tail -n1 "$MONTH_FILE" | egrep "$DAY +[0-9]+:.[0-9]+"`
+        if [ -n LAST_IN ]
+        then
+          UNTIL_CURRENT_TIME=`echo "$LAST_IN $TIME" | total`
+          WORK=$[$WORK + $UNTIL_CURRENT_TIME]
+        fi
+      fi
+
       DIFF=`diff $WORK $(workseconds_from_calendar_days 1)`
       echo "$DAY  `pretty_print $WORK`   `pretty_print $DIFF`"
+
       DAY_COUNT=$[$DAY_COUNT+1]
+      TOTAL=$[$TOTAL + $WORK]
     done
 
-    TOTAL=`egrep ".* .*:.* .*:.*" "$MONTH_FILE" | total`
     EXPECTED=$(workseconds_from_calendar_days $DAY_COUNT)
     DIFF=`diff $TOTAL $EXPECTED`
+
     echo "-----------+-------+-------"
-    echo "TOTAL        `pretty_print $TOTAL`  `pretty_print $DIFF`"
+    echo "TOTAL       `pretty_print $TOTAL`   `pretty_print $DIFF`"
     echo "-----------+-------+-------"
     ;;
   *)
