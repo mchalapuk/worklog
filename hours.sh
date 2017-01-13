@@ -80,15 +80,15 @@ diff() {
   echo $RETVAL
 }
 
-timestamp_from_workdays() {
+workseconds_from_calendar_days() {
   echo $[$1*8*60*60]
 }
 
 case "$CMD" in
   today)
     WORK=`egrep "$DATE .*:.* .*:.*" "$MONTH_FILE" | total`
-    DIFF=`diff $WORK $(timestamp_from_workdays 1)`
-    echo "$DAY  `pretty_print $WORK`  `pretty_print $DIFF`"
+    DIFF=`diff $WORK $(workseconds_from_calendar_days 1)`
+    echo "$DATE  `pretty_print $WORK`  `pretty_print $DIFF`"
     ;;
   month)
     echo "-----------+-------+-------"
@@ -99,13 +99,14 @@ case "$CMD" in
     for DAY in `cut -d" " -f1 $MONTH_FILE | sort | uniq`
     do
       WORK=`egrep "$DAY .*:.* .*:.*" "$MONTH_FILE" | total`
-      DIFF=`diff $WORK $(timestamp_from_workdays 1)`
+      DIFF=`diff $WORK $(workseconds_from_calendar_days 1)`
       echo "$DAY  `pretty_print $WORK`   `pretty_print $DIFF`"
       DAY_COUNT=$[$DAY_COUNT+1]
     done
 
-    TOTAL=`cat $MONTH_FILE | total`
-    DIFF=`diff $TOTAL $(timestamp_from_workdays $DAY_COUNT)`
+    TOTAL=`egrep ".* .*:.* .*:.*" "$MONTH_FILE" | total`
+    EXPECTED=$(workseconds_from_calendar_days $DAY_COUNT)
+    DIFF=`diff $TOTAL $EXPECTED`
     echo "-----------+-------+-------"
     echo "TOTAL        `pretty_print $TOTAL`  `pretty_print $DIFF`"
     echo "-----------+-------+-------"
