@@ -90,7 +90,7 @@ case "$CMD" in
     echo " date         work-hours   over-time"
     echo "------------+------------+-----------"
     WORK=`egrep "$DATE .*:.* .*:.*" "$MONTH_FILE" | total`
-    LAST_IN=`tail -n1 "$MONTH_FILE" | egrep "$DATE +[0-9]+:[0-9]+"`
+    LAST_IN=`tail -n1 "$MONTH_FILE" | egrep "$DATE +[0-9]+:[0-9]+$"`
     if [ -n LAST_IN ]
     then
       UNTIL_CURRENT_TIME=`echo "$LAST_IN $TIME" | total`
@@ -111,7 +111,7 @@ case "$CMD" in
       WORK=`egrep "$DAY .*:.* .*:.*" "$MONTH_FILE" | total`
       if [ $DAY == $DATE ]
       then
-        LAST_IN=`tail -n1 "$MONTH_FILE" | egrep "$DAY +[0-9]+:.[0-9]+"`
+        LAST_IN=`tail -n1 "$MONTH_FILE" | egrep "$DAY +[0-9]+:.[0-9]+$"`
         if [ -n LAST_IN ]
         then
           UNTIL_CURRENT_TIME=`echo "$LAST_IN $TIME" | total`
