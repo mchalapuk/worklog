@@ -80,7 +80,7 @@ workseconds_from_calendar_days() {
   echo $[$1*8*60*60]
 }
 
-total_work_from_day() {
+logged_workseconds_from_day() {
   WORK=`egrep "$1 .*:.* .*:.*" "$MONTH_FILE" | total`
 
   LAST_IN=`tail -n1 "$MONTH_FILE" | egrep "$DATE +[0-9]+:[0-9]+ *$"`
@@ -98,7 +98,7 @@ total_work_from_day() {
 today() {
   echo " date         work-hours   over-time"
   echo "------------+------------+-----------"
-  WORK=`total_work_from_day $DATE`
+  WORK=`logged_workseconds_from_day $DATE`
   DIFF=`diff $WORK $(workseconds_from_calendar_days 1)`
   echo " $DATE   `pretty_print $WORK`  `pretty_print $DIFF`"
 }
@@ -110,9 +110,9 @@ month() {
 
   DAY_COUNT=0
   TOTAL=0
-  for DAY in `cut -d" " -f1 $MONTH_FILE | sort | uniq`
+  for DAY in `cut -d" " -f1 $MONTH_FILE | grep -v $DATE | sort | uniq`
   do
-    WORK=`total_work_from_day $DAY`
+    WORK=`logged_workseconds_from_day $DAY`
     DIFF=`diff $WORK $(workseconds_from_calendar_days 1)`
     echo " $DAY   `pretty_print $WORK`  `pretty_print $DIFF`"
 
@@ -120,11 +120,23 @@ month() {
     TOTAL=$[$TOTAL + $WORK]
   done
 
-  EXPECTED=$(workseconds_from_calendar_days $DAY_COUNT)
-  DIFF=`diff $TOTAL $EXPECTED`
+  EXPECTED=`workseconds_from_calendar_days $DAY_COUNT`
+  TOTALDIFF=`diff $TOTAL $EXPECTED`
 
   echo "------------+------------+-----------"
-  echo " TOTAL        `pretty_print $TOTAL`  `pretty_print $DIFF`"
+  echo "              `pretty_print $TOTAL`  `pretty_print $TOTALDIFF`"
+  echo "------------+------------+-----------"
+
+  TODAY=`logged_workseconds_from_day $DATE`
+  DIFF=`diff $TODAY $(workseconds_from_calendar_days 1)`
+
+  echo " Today        `pretty_print $TODAY`  `pretty_print $DIFF`"
+  echo "------------+------------+-----------"
+
+  TOTAL=$[$TOTAL + $TODAY]
+  TOTALDIFF=$[$TOTALDIFF + $DIFF]
+
+  echo " TOTAL        `pretty_print $TOTAL`  `pretty_print $TOTALDIFF`"
   echo "------------+------------+-----------"
 }
 
