@@ -59,20 +59,16 @@ pretty_print() {
   if [ $1 -lt 0 ]
   then
     TS=`echo $1 | cut -d"-" -f2`
-    PREFIX="-"
+    SIGN="-1"
   else
     TS=$1
-    PREFIX=" "
+    SIGN="1"
   fi
 
   DAYS=$[`date --utc -d @$TS +%j`-1]
-  HOURS=$[`date --utc -d @$TS +%_H`+$[DAYS*24]]
-  if [ $HOURS -lt 10 ]
-  then
-    HOURS="0$HOURS"
-  fi
-  MINUTES=`date --utc -d @$TS +%M`
-  echo "$PREFIX$HOURS:$MINUTES"
+  HOURS=$[$SIGN * $[`date --utc -d @$TS +%_H`+$[DAYS*24]]]
+  MINUTES=`date --utc -d @$TS +%_M`
+  printf "%7d:%02d" "$HOURS" "$MINUTES"
 }
 
 diff() {
@@ -97,7 +93,7 @@ today() {
     WORK=$[$WORK + $UNTIL_CURRENT_TIME]
   fi
   DIFF=`diff $WORK $(workseconds_from_calendar_days 1)`
-  echo " $DATE       `pretty_print $WORK`      `pretty_print $DIFF`"
+  echo " $DATE   `pretty_print $WORK`  `pretty_print $DIFF`"
 }
 
 month() {
@@ -121,7 +117,7 @@ month() {
     fi
 
     DIFF=`diff $WORK $(workseconds_from_calendar_days 1)`
-    echo " $DAY       `pretty_print $WORK`      `pretty_print $DIFF`"
+    echo " $DAY   `pretty_print $WORK`  `pretty_print $DIFF`"
 
     DAY_COUNT=$[$DAY_COUNT+1]
     TOTAL=$[$TOTAL + $WORK]
@@ -131,7 +127,7 @@ month() {
   DIFF=`diff $TOTAL $EXPECTED`
 
   echo "------------+------------+-----------"
-  echo " TOTAL            `pretty_print $TOTAL`      `pretty_print $DIFF`"
+  echo " TOTAL        `pretty_print $TOTAL`  `pretty_print $DIFF`"
   echo "------------+------------+-----------"
 }
 
