@@ -80,18 +80,25 @@ workseconds_from_calendar_days() {
   echo $[$1*8*60*60]
 }
 
+total_work_from_day() {
+  WORK=`egrep "$1 .*:.* .*:.*" "$MONTH_FILE" | total`
+
+  LAST_IN=`tail -n1 "$MONTH_FILE" | egrep "$DATE +[0-9]+:[0-9]+ *$"`
+  if [ "$1" == "$DATE" ] && [ -n "$LAST_IN" ]
+  then
+    UNTIL_CURRENT_TIME=`echo "$LAST_IN $TIME" | total`
+    WORK=$[$WORK + $UNTIL_CURRENT_TIME]
+  fi
+
+  echo "$WORK"
+}
+
 # <commands>
 
 today() {
   echo " date         work-hours   over-time"
   echo "------------+------------+-----------"
-  WORK=`egrep "$DATE .*:.* .*:.*" "$MONTH_FILE" | total`
-  LAST_IN=`tail -n1 "$MONTH_FILE" | egrep "$DATE +[0-9]+:[0-9]+$"`
-  if [ -n LAST_IN ]
-  then
-    UNTIL_CURRENT_TIME=`echo "$LAST_IN $TIME" | total`
-    WORK=$[$WORK + $UNTIL_CURRENT_TIME]
-  fi
+  WORK=`total_work_from_day $DATE`
   DIFF=`diff $WORK $(workseconds_from_calendar_days 1)`
   echo " $DATE   `pretty_print $WORK`  `pretty_print $DIFF`"
 }
@@ -105,17 +112,7 @@ month() {
   TOTAL=0
   for DAY in `cut -d" " -f1 $MONTH_FILE | sort | uniq`
   do
-    WORK=`egrep "$DAY .*:.* .*:.*" "$MONTH_FILE" | total`
-    if [ $DAY == $DATE ]
-    then
-      LAST_IN=`tail -n1 "$MONTH_FILE" | egrep "$DAY +[0-9]+:.[0-9]+$"`
-      if [ -n LAST_IN ]
-      then
-        UNTIL_CURRENT_TIME=`echo "$LAST_IN $TIME" | total`
-        WORK=$[$WORK + $UNTIL_CURRENT_TIME]
-      fi
-    fi
-
+    WORK=`total_work_from_day $DAY`
     DIFF=`diff $WORK $(workseconds_from_calendar_days 1)`
     echo " $DAY   `pretty_print $WORK`  `pretty_print $DIFF`"
 
