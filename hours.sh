@@ -26,6 +26,7 @@ MONTH=`date +%m`
 DAY=`date +%d`
 HOUR=`date +%H`
 MINUTE=`date +%M`
+UNIXTIME=`date +%s`
 
 YEAR_DIR="$DATA_DIR/$YEAR"
 mkdir -p "$YEAR_DIR"
@@ -101,6 +102,9 @@ today() {
   WORK=`logged_workseconds_from_day $DATE`
   DIFF=`diff $WORK $(workseconds_from_calendar_days 1)`
   echo " $DATE   `pretty_print $WORK`  `pretty_print $DIFF`"
+  EOW=$[$UNIXTIME - $DIFF]
+  echo ""
+  echo "Expected EOW: `date --utc -d @$EOW +'%Y-%M-%d %H:%m'` `date +%Z`"
 }
 
 month() {
