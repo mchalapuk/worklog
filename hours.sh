@@ -104,7 +104,7 @@ today() {
   echo " $DATE   `pretty_print $WORK`  `pretty_print $DIFF`"
   EOW=$[$UNIXTIME - $DIFF]
   echo ""
-  echo "Expected EOW: `date --utc -d @$EOW +'%Y-%M-%d %H:%m'` `date +%Z`"
+  echo "Expected EOW: `date -d @$EOW +'%Y-%m-%d %R %Z'`"
 }
 
 month() {
