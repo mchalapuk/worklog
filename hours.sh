@@ -31,7 +31,7 @@ UNIXTIME=`date +%s`
 YEAR_DIR="$DATA_DIR/$YEAR"
 mkdir -p "$YEAR_DIR"
 
-MONTH_FILE="$YEAR_DIR/$MONTH.log"
+MONTH_FILE="$YEAR_DIR/$MONTH.worklog"
 test -f "$MONTH_FILE" || touch "$MONTH_FILE"
 
 PRG=$0
@@ -46,14 +46,49 @@ CMD=$1
 shift
 
 total() {
-  awk '{
-    split($2, from, ":");
-    split($3, to, ":");
-    total += (to[1]*60 + to[2]) - (from[1]*60 + from[2]);
-  }
-  END {
-    printf "%d", total*60
-  }'
+  FIX_THE_LOGS="please fix the log files"
+  RETVAL=0
+
+  IN=""
+  while read -r DAY HOUR ACTION
+  do
+    TIMESTAMP=`date --utc -d "$DAY $HOUR" +%s`
+    case "$ACTION" in
+
+      'IN')
+        if [ "$IN" != "" ]
+        then
+          printf "detected two IN actions in a row; %s\n", $FIX_THE_LOGS >&2
+          exit 1
+        fi
+        IN=$TIMESTAMP
+        ;;
+
+      'OUT')
+        OUT=$TIMESTAMP
+        if [ $OUT -lt $IN ]
+        then
+          printf "OUT action's timestamp before corresponding IN action; %s\n",
+            $FIX_THE_LOGS >&2
+        fi
+        RETVAL=$[$RETVAL + $[$OUT - $IN]]
+        IN=""
+        ;;
+
+      *)
+        printf "unrecognized action: %s; %s\n", $ACTION, $FIX_THE_LOGS >&2
+        exit 1
+        ;;
+
+    esac
+  done
+
+  if [ "$IN" != "" ] && [ $UNIXTIME -gt $IN ]
+  then
+    RETVAL=$[$RETVAL + $[$UNIXTIME - $IN]]
+  fi
+
+  echo $RETVAL
 }
 
 pretty_print() {
@@ -82,16 +117,7 @@ workseconds_from_calendar_days() {
 }
 
 logged_workseconds_from_day() {
-  WORK=`egrep "$1 .*:.* .*:.*" "$MONTH_FILE" | total`
-
-  LAST_IN=`tail -n1 "$MONTH_FILE" | egrep "$DATE +[0-9]+:[0-9]+ *$"`
-  if [ "$1" == "$DATE" ] && [ -n "$LAST_IN" ]
-  then
-    UNTIL_CURRENT_TIME=`echo "$LAST_IN $TIME" | total`
-    WORK=$[$WORK + $UNTIL_CURRENT_TIME]
-  fi
-
-  echo "$WORK"
+  egrep "$1 .*:.* .*" "$MONTH_FILE" | total
 }
 
 # <commands>
