@@ -50,10 +50,10 @@ total() {
   RETVAL=0
 
   IN=""
-  while read -r DAY HOUR ACTION
+  while read -r _DAY _HOUR _ACTION
   do
-    TIMESTAMP=`date --utc -d "$DAY $HOUR" +%s`
-    case "$ACTION" in
+    TIMESTAMP=$(date -d "$_DAY $_HOUR:00 `date +%Z`" +%s)
+    case "$_ACTION" in
 
       'IN')
         if [ "$IN" != "" ]
@@ -71,12 +71,13 @@ total() {
           printf "OUT action's timestamp before corresponding IN action; %s\n",
             $FIX_THE_LOGS >&2
         fi
-        RETVAL=$[$RETVAL + $[$OUT - $IN]]
+        WORK=$[$OUT - $IN]
+        RETVAL=$[$RETVAL + $WORK]
         IN=""
         ;;
 
       *)
-        printf "unrecognized action: %s; %s\n", $ACTION, $FIX_THE_LOGS >&2
+        printf "unrecognized action: %s; %s\n", $_ACTION, $FIX_THE_LOGS >&2
         exit 1
         ;;
 
@@ -85,7 +86,8 @@ total() {
 
   if [ "$IN" != "" ] && [ $UNIXTIME -gt $IN ]
   then
-    RETVAL=$[$RETVAL + $[$UNIXTIME - $IN]]
+    WORK=$[$UNIXTIME - $IN]
+    RETVAL=$[$RETVAL + $WORK]
   fi
 
   echo $RETVAL
