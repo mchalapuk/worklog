@@ -97,16 +97,18 @@ pretty_print() {
   if [ $1 -lt 0 ]
   then
     TS=`echo $1 | cut -d"-" -f2`
-    SIGN="-1"
+    SIGN="-"
   else
     TS=$1
-    SIGN="1"
+    SIGN=""
   fi
 
   DAYS=$[`date --utc -d @$TS +%_j`- 1]
-  HOURS=$[$SIGN * $[`date --utc -d @$TS +%_H`+$[DAYS*24]]]
+  HOURS=$[`date --utc -d @$TS +%_H` + $[$DAYS * 24]]
   MINUTES=`date --utc -d @$TS +%_M`
-  printf "%7d:%02d" "$HOURS" "$MINUTES"
+
+  HNM="$SIGN`printf "%02d:%02d\n" "$HOURS" "$MINUTES"`"
+  printf "%10s\n" "$HNM"
 }
 
 diff() {
