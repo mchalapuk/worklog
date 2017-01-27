@@ -103,7 +103,7 @@ pretty_print() {
     SIGN="1"
   fi
 
-  DAYS=$[`date --utc -d @$TS +%j`-1]
+  DAYS=$[`date --utc -d @$TS +%_j`- 1]
   HOURS=$[$SIGN * $[`date --utc -d @$TS +%_H`+$[DAYS*24]]]
   MINUTES=`date --utc -d @$TS +%_M`
   printf "%7d:%02d" "$HOURS" "$MINUTES"
