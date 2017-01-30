@@ -58,27 +58,37 @@ total() {
       'IN')
         if [ "$IN" != "" ]
         then
-          printf "detected two IN actions in a row; %s\n", $FIX_THE_LOGS >&2
-          exit 1
+          printf "detected two IN actions in a row; %s\n" "$FIX_THE_LOGS" >&2
+          return 1
         fi
         IN=$TIMESTAMP
         ;;
 
       'OUT')
         OUT=$TIMESTAMP
-        if [ $OUT -lt $IN ]
+
+        if [ "$IN" == "" ]
         then
-          printf "OUT action's timestamp before corresponding IN action; %s\n",
-            $FIX_THE_LOGS >&2
+          printf "detected OUT actions without corresponding IN action %s\n" \
+            "$FIX_THE_LOGS" >&2
+          return 1
         fi
+
+        if [ "$OUT" -lt "$IN" ]
+        then
+          printf "OUT action's timestamp before corresponding IN action; %s\n" \
+            "$FIX_THE_LOGS" >&2
+          return 1
+        fi
+
         WORK=$[$OUT - $IN]
         RETVAL=$[$RETVAL + $WORK]
         IN=""
         ;;
 
       *)
-        printf "unrecognized action: %s; %s\n", $_ACTION, $FIX_THE_LOGS >&2
-        exit 1
+        printf "unrecognized action: %s; %s\n", "$_ACTION" "$FIX_THE_LOGS" >&2
+        return 1
         ;;
 
     esac
