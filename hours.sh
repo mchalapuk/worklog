@@ -19,20 +19,32 @@ test -d "$DATA_DIR" || \
   die "DATA_DIR=$DATA_DIR is not a directory; run \`mkdir -p $DATA_DIR\` to correct it"
 
 DATE=`date +%Y-%m-%d`
-TIME=`date +%H:%M`
+TIME=`date +%H:%M:%S`
 
 YEAR=`date +%Y`
 MONTH=`date +%m`
 DAY=`date +%d`
 HOUR=`date +%H`
 MINUTE=`date +%M`
+SECOND=`date +%S`
 UNIXTIME=`date +%s`
 
-YEAR_DIR="$DATA_DIR/$YEAR"
-mkdir -p "$YEAR_DIR"
+YEAR_REGEX="[0-9]{4,}"
+MONTH_REGEX="(0?[1-9]|1[012])"
+DAY_REGEX="(0?[1-9]|[12][0-9]|3[01])"
+DATE_REGEX="${YEAR_REGEX}-${MONTH_REGEX}-${DAY_REGEX}"
+TIME_REGEX="[0-9]{1,2}(:[0-9]{2}){1,2}"
+DATE_TIME_REGEX="($DATE_REGEX\s+)?$TIME_REGEX"
+ACTION_REGEX="[A-Z]+"
 
-MONTH_FILE="$YEAR_DIR/$MONTH.worklog"
-test -f "$MONTH_FILE" || touch "$MONTH_FILE"
+month_file() {
+  YEAR_DIR="$DATA_DIR/$YEAR"
+  mkdir -p "$YEAR_DIR"
+
+  MONTH_FILE="$YEAR_DIR/$MONTH.worklog"
+  test -f "$MONTH_FILE" || touch "$MONTH_FILE"
+  echo "$MONTH_FILE"
+}
 
 PRG=$0
 
@@ -52,7 +64,7 @@ total() {
   IN=""
   while read -r _DAY _HOUR _ACTION
   do
-    TIMESTAMP=$(date -d "$_DAY $_HOUR:00 `date +%Z`" +%s)
+    TIMESTAMP=$(date -d "$_DAY $_HOUR `date +%Z`" +%s)
     case "$_ACTION" in
 
       'IN')
@@ -94,7 +106,7 @@ total() {
     esac
   done
 
-  if [ "$IN" != "" ] && [ $UNIXTIME -gt $IN ]
+  if [ "$IN" != "" ] && [ "$UNIXTIME" -gt "$IN" ]
   then
     WORK=$[$UNIXTIME - $IN]
     RETVAL=$[$RETVAL + $WORK]
@@ -131,7 +143,12 @@ workseconds_from_calendar_days() {
 }
 
 logged_workseconds_from_day() {
-  egrep "$1 .*:.* .*" "$MONTH_FILE" | total
+  if ! egrep -q "^$DATE_REGEX$" <<< "$1"
+  then
+    echo "Wrong date format: $1; expected=$DATE_REGEX" >&2
+    exit 1
+  fi
+  egrep "^$1\s+$TIME_REGEX\s+$ACTION_REGEX$" "`month_file`" | total
 }
 
 # <commands>
@@ -148,13 +165,31 @@ today() {
 }
 
 month() {
+  MONTH=${1:-$MONTH}
+  if ! egrep -q "^$MONTH_REGEX$" <<< "$MONTH"
+  then
+    echo "Wrong month format: $MONTH; expected=$MONTH_REGEX" >&2
+    exit 1
+  fi
+  if [ "$MONTH" -lt 10 ]
+  then
+    MONTH="0$MONTH"
+  fi
+
+  YEAR=${2:-$YEAR}
+  if ! egrep -q "^$YEAR_REGEX$" <<< "$YEAR"
+  then
+    echo "Wrong year format: $YEAR; expected=$YEAR_REGEX" >&2
+    exit 1
+  fi
+
   echo "------------+------------+-----------"
   echo " date         work-hours   over-time"
   echo "------------+------------+-----------"
 
   DAY_COUNT=0
   TOTAL=0
-  for DAY in `cut -d" " -f1 $MONTH_FILE | grep -v $DATE | sort | uniq`
+  for DAY in $(cut -d" " -f1 "`month_file`" | grep -v $DATE | sort | uniq)
   do
     WORK=`logged_workseconds_from_day $DAY`
     DIFF=`diff $WORK $(workseconds_from_calendar_days 1)`
@@ -184,11 +219,40 @@ month() {
   echo "------------+------------+-----------"
 }
 
+log() {
+  ACTION=$1
+
+  case "$ACTION" in
+    IN) ;;
+    OUT) ;;
+    "")
+      echo "No action specified" >&2
+      exit 1
+      ;;
+    *)
+      echo "Unknown action: $ACTION" >&2
+      exit 1
+  esac
+
+  DATE=${2:-$DATE}
+  TIME=${3:-$TIME}
+
+  DATE_TIME="$DATE $TIME"
+  if ! egrep -q "^$DATE_TIME_REGEX$" <<< "$DATE_TIME"
+  then
+    echo "Wrong date-time format: $DATE_TIME; expected=$DATE_TIME_REGEX" >&2
+    exit 1
+  fi
+
+  echo "$DATE_TIME $ACTION" >> "`month_file`"
+}
+
 # </commands>
 
 case "$CMD" in
   day) ;& today) today;;
-  month) month;;
+  month) month "$@";;
+  log) log "$@";;
   *)
     echo "unknown command: $CMD" >&2
     echo "" >&2
