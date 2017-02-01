@@ -2,6 +2,25 @@
 
 #set -x
 
+PRG=$0
+
+usage() {
+  echo "Usage: $PRG <command> (arguments...)"
+  echo ""
+  echo "Commands:"
+  echo "  today - displays hours logged today"
+  echo "  month (m) (y) - displays hours logged in a month (default=this month)"
+  echo "  log <action> (datetime) - logs an action"
+  echo ""
+  echo "Actions:"
+  echo "  IN - start logging work"
+  echo "  OUT - stop logging work"
+  echo ""
+}
+
+CMD=$1
+shift
+
 die() {
   echo "$@" >&2
   exit 1
@@ -45,17 +64,6 @@ month_file() {
   test -f "$MONTH_FILE" || touch "$MONTH_FILE"
   echo "$MONTH_FILE"
 }
-
-PRG=$0
-
-usage() {
-  echo "Usage: $PRG command (arguments...)"
-  echo ""
-  echo "  Commands:"
-}
-
-CMD=$1
-shift
 
 total() {
   FIX_THE_LOGS="please fix the log files"
@@ -253,6 +261,7 @@ case "$CMD" in
   day) ;& today) today;;
   month) month "$@";;
   log) log "$@";;
+  help) ;& usage) ;& ?) usage;;
   *)
     echo "unknown command: $CMD" >&2
     echo "" >&2
