@@ -9,6 +9,7 @@ usage() {
   echo ""
   echo "Commands:"
   echo "  today - displays hours logged today"
+  echo "  day (((y-)m-)d) - displays hours logged in a day (default=today)"
   echo "  month (m) (y) - displays hours logged in a month (default=this month)"
   echo "  log <action> (datetime) - logs an action"
   echo ""
@@ -22,7 +23,7 @@ CMD=$1
 shift
 
 die() {
-  echo "$@" >&2
+  echo -e "$@" >&2
   exit 1
 }
 
@@ -41,8 +42,8 @@ DATE=`date +%Y-%m-%d`
 TIME=`date +%H:%M:%S`
 
 YEAR=`date +%Y`
-MONTH=`date +%m`
-DAY=`date +%d`
+MONTH=$(echo `date +%_m`)
+DAY=$(echo `date +%_d`)
 HOUR=`date +%H`
 MINUTE=`date +%M`
 SECOND=`date +%S`
@@ -60,7 +61,7 @@ month_file() {
   YEAR_DIR="$DATA_DIR/$YEAR"
   mkdir -p "$YEAR_DIR"
 
-  MONTH_FILE="$YEAR_DIR/$MONTH.worklog"
+  MONTH_FILE="$YEAR_DIR/`printf "%02d" "$MONTH"`.worklog"
   test -f "$MONTH_FILE" || touch "$MONTH_FILE"
   echo "$MONTH_FILE"
 }
@@ -161,7 +162,30 @@ logged_workseconds_from_day() {
 
 # <commands>
 
-today() {
+day() {
+  if [ "" == "$1" ]
+  then
+    DATE="$DATE"
+  elif egrep -q "^${DATE_REGEX}$" <<< "$1"
+  then
+    DATE=$1
+  elif egrep -q "^${MONTH_REGEX}-${DAY_REGEX}$" <<< "$1"
+  then
+    MONTH=$(printf "%02d" `cut -d'-' -f1 <<< "$1"`)
+    DAY=$(printf "%02d" `cut -d"-" -f2 <<< "$1"`)
+    DATE="${YEAR}-${MONTH}-${DAY}"
+  elif egrep -q "^${DAY_REGEX}$" <<< "$1"
+  then
+    MONTH=`printf "%02d" "$MONTH"`
+    DAY=`printf "%02d" "$1"`
+    DATE="${YEAR}-${MONTH}-${DAY}"
+  else
+    die "Unrecognized day format: $1;\n"\
+      "  expected=${DATE_REGEX},\n"\
+      "  expected=${MONTH_REGEX}-${DAY_REGEX},\n"\
+      "  expected=${DAY_REGEX}"
+  fi
+
   echo " date         work-hours   over-time"
   echo "------------+------------+-----------"
   WORK=`logged_workseconds_from_day $DATE`
@@ -176,19 +200,14 @@ month() {
   MONTH=${1:-$MONTH}
   if ! egrep -q "^$MONTH_REGEX$" <<< "$MONTH"
   then
-    echo "Wrong month format: $MONTH; expected=$MONTH_REGEX" >&2
-    exit 1
+    die "Wrong month format: $MONTH; expected=$MONTH_REGEX" >&2
   fi
-  if [ "$MONTH" -lt 10 ]
-  then
-    MONTH="0$MONTH"
-  fi
+  MONTH=`printf "%02d" "$MONTH"`
 
   YEAR=${2:-$YEAR}
   if ! egrep -q "^$YEAR_REGEX$" <<< "$YEAR"
   then
-    echo "Wrong year format: $YEAR; expected=$YEAR_REGEX" >&2
-    exit 1
+    die "Wrong year format: $YEAR; expected=$YEAR_REGEX" >&2
   fi
 
   echo "------------+------------+-----------"
@@ -258,7 +277,8 @@ log() {
 # </commands>
 
 case "$CMD" in
-  day) ;& today) today;;
+  day) day "$@";;
+  today) day "$DATE";;
   month) month "$@";;
   log) log "$@";;
   help) ;& usage) ;& ?) usage;;
