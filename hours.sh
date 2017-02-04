@@ -28,8 +28,8 @@ die() {
 }
 
 CONFIG_FILE="$HOME/.worklog"
-test -f "$CONFIG_FILE" || \
-  die "no config file found; run \`touch $CONFIG_FILE\` to correct this"
+test -f "$CONFIG_FILE" || touch "$CONFIG_FILE" 
+test -f "$CONFIG_FILE" || die "no config file found; run \`touch $CONFIG_FILE\` to correct this"
 
 . "$CONFIG_FILE"
 test "$DATA_DIR" != "" || \
