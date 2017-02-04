@@ -79,8 +79,7 @@ total() {
       'IN')
         if [ "$IN" != "" ]
         then
-          printf "detected two IN actions in a row; %s\n" "$FIX_THE_LOGS" >&2
-          return 1
+          die "detected two IN actions in a row; $FIX_THE_LOGS"
         fi
         IN=$TIMESTAMP
         ;;
@@ -90,16 +89,12 @@ total() {
 
         if [ "$IN" == "" ]
         then
-          printf "detected OUT actions without corresponding IN action %s\n" \
-            "$FIX_THE_LOGS" >&2
-          return 1
+          die "detected OUT action without corresponding IN action; $FIX_THE_LOGS"
         fi
 
         if [ "$OUT" -lt "$IN" ]
         then
-          printf "OUT action's timestamp before corresponding IN action; %s\n" \
-            "$FIX_THE_LOGS" >&2
-          return 1
+          die "OUT action's timestamp before corresponding IN action; $FIX_THE_LOGS"
         fi
 
         WORK=$[$OUT - $IN]
@@ -108,8 +103,7 @@ total() {
         ;;
 
       *)
-        printf "unrecognized action: %s; %s\n", "$_ACTION" "$FIX_THE_LOGS" >&2
-        return 1
+        die "unrecognized action: $_ACTION; $FIX_THE_LOGS"
         ;;
 
     esac
@@ -154,8 +148,7 @@ workseconds_from_calendar_days() {
 logged_workseconds_from_day() {
   if ! egrep -q "^$DATE_REGEX$" <<< "$1"
   then
-    echo "Wrong date format: $1; expected=$DATE_REGEX" >&2
-    exit 1
+    die "Wrong date format: $1; expected=$DATE_REGEX"
   fi
   egrep "^$1\s+$TIME_REGEX\s+$ACTION_REGEX$" "`month_file`" | total
 }
@@ -250,15 +243,9 @@ log() {
   ACTION=$1
 
   case "$ACTION" in
-    IN) ;;
-    OUT) ;;
-    "")
-      echo "No action specified" >&2
-      exit 1
-      ;;
-    *)
-      echo "Unknown action: $ACTION" >&2
-      exit 1
+    IN) ;& OUT) ;;
+    '') die "No action specified";;
+    *) die "Unknown action: $ACTION";;
   esac
 
   DATE=${2:-$DATE}
@@ -267,8 +254,7 @@ log() {
   DATE_TIME="$DATE $TIME"
   if ! egrep -q "^$DATE_TIME_REGEX$" <<< "$DATE_TIME"
   then
-    echo "Wrong date-time format: $DATE_TIME; expected=$DATE_TIME_REGEX" >&2
-    exit 1
+    die "Wrong date-time format: $DATE_TIME; expected=$DATE_TIME_REGEX"
   fi
 
   echo "$DATE_TIME $ACTION" >> "`month_file`"
@@ -282,6 +268,12 @@ case "$CMD" in
   month) month "$@";;
   log) log "$@";;
   help) ;& usage) ;& ?) usage;;
+  '')
+    echo "no command specified" >&2
+    echo "" >&2
+    usage >&2
+    exit 1
+    ;;
   *)
     echo "unknown command: $CMD" >&2
     echo "" >&2
