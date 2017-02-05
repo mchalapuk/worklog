@@ -31,13 +31,12 @@ Actions:"
 
 ## Configuration
 
-Worklog looks for a config file located in `~/.worklog`.
-It should be a valid shell script (its loaded by `hours` script with `source` comand).
+Worklog looks for a config file located in `~/.worklog`, which must be a valid shell script.
 
 The configuration script must define following variables:
 
 ```sh
-DATA_DIR=/path/to/worklog/data/
+DATA_DIR=</path/to/worklog/data/>
 ```
 
 In case `~/.worklog` does not exist, the script creates it with following
