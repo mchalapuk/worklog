@@ -46,6 +46,18 @@ default configuration.
 DATA_DIR=$HOME/worklog
 ```
 
+## Automatic Logging
+
+Hours can be logged automatically on system events.
+
+Scripts for LightDm (default on Ubuntu) can be found in [/lightdm](/lightdm)
+folder. These scripts logs all errors into `~/.hours.log` file.
+
+```
+# in order to display the logfile with each login
+echo 'cat $HOME/.hours.log 2>/dev/null' >> ~/.profile
+```
+
 ## License
 
 &copy; 2017 Maciej Chałapuk. Released under [MIT License](LICENSE).
