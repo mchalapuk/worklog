@@ -28,7 +28,7 @@ die() {
 }
 
 CONFIG_FILE="$HOME/.worklog"
-test -f "$CONFIG_FILE" || echo "DATA_DIR=\$HOME/worklog" > "$CONFIG_FILE" 
+test -f "$CONFIG_FILE" || echo "DATA_DIR=\$HOME/worklog" > "$CONFIG_FILE"
 test -f "$CONFIG_FILE" || \
   die "no config file found; run \`touch $CONFIG_FILE\` to correct this"
 
@@ -68,6 +68,10 @@ month_file() {
   echo "$MONTH_FILE"
 }
 
+error() {
+ test -n "$VERBOSE" && echo $@ >&2
+}
+
 total() {
   FIX_THE_LOGS="please fix the log files"
   RETVAL=0
@@ -81,7 +85,7 @@ total() {
       'IN')
         if [ "$IN" != "" ]
         then
-          die "detected two IN actions in a row; $FIX_THE_LOGS"
+          error "detected two IN actions in a row ($_DAY $_HOUR); $FIX_THE_LOGS"
         fi
         IN=$TIMESTAMP
         ;;
@@ -91,12 +95,14 @@ total() {
 
         if [ "$IN" == "" ]
         then
-          die "detected OUT action without corresponding IN action; $FIX_THE_LOGS"
+          error "detected OUT action without corresponding IN action ($_DAY $_HOUR); $FIX_THE_LOGS"
+          continue
         fi
 
         if [ "$OUT" -lt "$IN" ]
         then
-          die "OUT action's timestamp before corresponding IN action; $FIX_THE_LOGS"
+          error "OUT action's timestamp before corresponding IN action ($_DAY $_HOUR); $FIX_THE_LOGS"
+          continue
         fi
 
         WORK=$[$OUT - $IN]
@@ -105,7 +111,7 @@ total() {
         ;;
 
       *)
-        die "unrecognized action: $_ACTION; $FIX_THE_LOGS"
+        error "unrecognized action: $_ACTION; $FIX_THE_LOGS"
         ;;
 
     esac
