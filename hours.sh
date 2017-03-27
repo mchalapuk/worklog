@@ -79,7 +79,7 @@ total() {
   IN=""
   while read -r _DAY _HOUR _ACTION
   do
-    TIMESTAMP=$(date -d "$_DAY $_HOUR `date +%Z`" +%s)
+    TIMESTAMP=$(date -d "$_DAY $_HOUR `date +%z`" +%s)
     case "$_ACTION" in
 
       'IN')
@@ -112,6 +112,7 @@ total() {
 
       *)
         error "unrecognized action: $_ACTION; $FIX_THE_LOGS"
+        continue
         ;;
 
     esac
@@ -227,7 +228,7 @@ month() {
     TOTAL=$[$TOTAL + $WORK]
   done
 
-  EXPECTED=`workseconds_from_calendar_days $DAY_COUNT`
+  EXPECTED=`workseconds_from_calendar_days 21`
   TOTALDIFF=`diff $TOTAL $EXPECTED`
 
   echo "------------+------------+-----------"
@@ -241,7 +242,7 @@ month() {
   echo "------------+------------+-----------"
 
   TOTAL=$[$TOTAL + $TODAY]
-  TOTALDIFF=$[$TOTALDIFF + $DIFF]
+  TOTALDIFF=$[$TOTALDIFF + $TODAY]
 
   echo " TOTAL        `pretty_print $TOTAL`  `pretty_print $TOTALDIFF`"
   echo "------------+------------+-----------"
