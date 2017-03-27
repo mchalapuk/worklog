@@ -36,6 +36,9 @@ test -f "$CONFIG_FILE" || \
 test "$DATA_DIR" != "" || \
   die "DATA_DIR variable not defined; please add it to $CONFIG_FILE"
 
+DAILY_WORK_HOURS=${DAILY_WORK_HOURS:-8}
+MONTHLY_WORK_DAYS=${MONTHLY_WORK_DAYS:-21}
+
 test -d "$DATA_DIR" || mkdir -p "$DATA_DIR"
 test -d "$DATA_DIR" || \
   die "DATA_DIR=$DATA_DIR is not a directory; run \`mkdir -p $DATA_DIR\` to correct it"
@@ -151,7 +154,7 @@ diff() {
 }
 
 workseconds_from_calendar_days() {
-  echo $[$1*8*60*60]
+  echo $[$1*$DAILY_WORK_HOURS*60*60]
 }
 
 logged_workseconds_from_day() {
@@ -228,7 +231,7 @@ month() {
     TOTAL=$[$TOTAL + $WORK]
   done
 
-  EXPECTED=`workseconds_from_calendar_days 21`
+  EXPECTED=`workseconds_from_calendar_days $MONTHLY_WORK_DAYS`
   TOTALDIFF=`diff $TOTAL $EXPECTED`
 
   echo "------------+------------+-----------"
