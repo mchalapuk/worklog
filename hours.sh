@@ -238,6 +238,8 @@ month() {
   echo "              `pretty_print $TOTAL`  `pretty_print $TOTALDIFF`"
   echo "------------+------------+-----------"
 
+  [ "$MONTH" == "`printf "%02d" "$1"`" ] && return
+
   TODAY=`logged_workseconds_from_day $DATE`
   DIFF=`diff $TODAY $(workseconds_from_calendar_days 1)`
 
