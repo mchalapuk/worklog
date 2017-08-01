@@ -271,6 +271,7 @@ log() {
     die "Wrong date-time format: $DATE_TIME; expected=$DATE_TIME_REGEX"
   fi
 
+  MONTH=`printf "%02d" "$MONTH"`
   echo "$DATE_TIME $ACTION" >> "`month_file`"
 }
 
