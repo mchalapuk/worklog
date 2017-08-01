@@ -66,7 +66,7 @@ month_file() {
   YEAR_DIR="$DATA_DIR/$YEAR"
   mkdir -p "$YEAR_DIR"
 
-  MONTH_FILE="$YEAR_DIR/`printf "%02d" "$MONTH"`.worklog"
+  MONTH_FILE="$YEAR_DIR/$MONTH.worklog"
   test -f "$MONTH_FILE" || touch "$MONTH_FILE"
   echo "$MONTH_FILE"
 }
