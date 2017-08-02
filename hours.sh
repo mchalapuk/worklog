@@ -43,7 +43,8 @@ test -d "$DATA_DIR" || mkdir -p "$DATA_DIR"
 test -d "$DATA_DIR" || \
   die "DATA_DIR=$DATA_DIR is not a directory; run \`mkdir -p $DATA_DIR\` to correct it"
 
-DATE=`date +%Y-%m-%d`
+TODAY=`date +%Y-%m-%d`
+DATE="$TODAY"
 TIME=`date +%H:%M:%S`
 
 YEAR=`date +%Y`
@@ -228,6 +229,9 @@ day() {
   WORK=`logged_workseconds_from_day $DATE`
   DIFF=`diff $WORK $(workseconds_from_calendar_days 1)`
   echo " $DATE   `pretty_print $WORK`  `pretty_print $DIFF`"
+
+  test "$DATE" == "$TODAY" || return
+
   EOW=$[$UNIXTIME - $DIFF]
   echo ""
   echo "Expected EOW: `date -d @$EOW +'%Y-%m-%d %R %Z'`"
