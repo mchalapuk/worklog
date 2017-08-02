@@ -47,8 +47,8 @@ DATE=`date +%Y-%m-%d`
 TIME=`date +%H:%M:%S`
 
 YEAR=`date +%Y`
-MONTH=$(echo `date +%_m`)
-DAY=$(echo `date +%_d`)
+MONTH=$(echo `date +%m`)
+DAY=$(echo `date +%d`)
 HOUR=`date +%H`
 MINUTE=`date +%M`
 SECOND=`date +%S`
@@ -62,8 +62,41 @@ TIME_REGEX="[0-9]{1,2}(:[0-9]{2}){1,2}"
 DATE_TIME_REGEX="($DATE_REGEX\s+)?$TIME_REGEX"
 ACTION_REGEX="[A-Z]+"
 
+add_leading_zero() {
+  if egrep -q "^[0-9]$" <<< "$1"
+  then
+    printf "%02d" "$1"
+  else
+    echo "$1"
+  fi
+}
+
+check_year() {
+  if ! egrep -q "^$YEAR_REGEX$" <<< "$1"
+  then
+    die "Wrong year format: $1; expected=$YEAR_REGEX" >&2
+  fi
+  echo "$1"
+}
+
+check_month() {
+  if ! egrep -q "^$MONTH_REGEX$" <<< "$1"
+  then
+    die "Wrong month format: $1; expected=$MONTH_REGEX" >&2
+  fi
+  add_leading_zero $1
+}
+
+check_day() {
+  if ! egrep -q "^$DAY_REGEX$" <<< "$1"
+  then
+    die "Wrong day format: $1; expected=$DAY_REGEX" >&2
+  fi
+  add_leading_zero $1
+}
+
 month_file() {
-  YEAR_DIR="$DATA_DIR/$YEAR"
+  YEAR_DIR="$DATA_DIR$YEAR"
   mkdir -p "$YEAR_DIR"
 
   MONTH_FILE="$YEAR_DIR/$MONTH.worklog"
@@ -176,13 +209,12 @@ day() {
     DATE=$1
   elif egrep -q "^${MONTH_REGEX}-${DAY_REGEX}$" <<< "$1"
   then
-    MONTH=$(printf "%02d" `cut -d'-' -f1 <<< "$1"`)
-    DAY=$(printf "%02d" `cut -d"-" -f2 <<< "$1"`)
+    MONTH=$(check_month `cut -d'-' -f1 <<< "$1"`)
+    DAY=$(check_day `cut -d"-" -f2 <<< "$1"`)
     DATE="${YEAR}-${MONTH}-${DAY}"
   elif egrep -q "^${DAY_REGEX}$" <<< "$1"
   then
-    MONTH=`printf "%02d" "$MONTH"`
-    DAY=`printf "%02d" "$1"`
+    DAY=`check_day "$1"`
     DATE="${YEAR}-${MONTH}-${DAY}"
   else
     die "Unrecognized day format: $1;\n"\
@@ -202,18 +234,8 @@ day() {
 }
 
 month() {
-  MONTH=${1:-$MONTH}
-  if ! egrep -q "^$MONTH_REGEX$" <<< "$MONTH"
-  then
-    die "Wrong month format: $MONTH; expected=$MONTH_REGEX" >&2
-  fi
-  MONTH=`printf "%02d" "$MONTH"`
-
-  YEAR=${2:-$YEAR}
-  if ! egrep -q "^$YEAR_REGEX$" <<< "$YEAR"
-  then
-    die "Wrong year format: $YEAR; expected=$YEAR_REGEX" >&2
-  fi
+  MONTH=`check_month ${1:-$MONTH}`
+  YEAR=`check_year ${2:-$YEAR}`
 
   echo "------------+------------+-----------"
   echo " date         work-hours   over-time"
@@ -237,8 +259,6 @@ month() {
   echo "------------+------------+-----------"
   echo "              `pretty_print $TOTAL`  `pretty_print $TOTALDIFF`"
   echo "------------+------------+-----------"
-
-  [ "$MONTH" == "`printf "%02d" "$1"`" ] && return
 
   TODAY=`logged_workseconds_from_day $DATE`
   DIFF=`diff $TODAY $(workseconds_from_calendar_days 1)`
@@ -271,7 +291,6 @@ log() {
     die "Wrong date-time format: $DATE_TIME; expected=$DATE_TIME_REGEX"
   fi
 
-  MONTH=`printf "%02d" "$MONTH"`
   echo "$DATE_TIME $ACTION" >> "`month_file`"
 }
 
