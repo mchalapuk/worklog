@@ -275,23 +275,32 @@ month() {
     TOTAL_DIFF=$[$TOTAL_DIFF + $DIFF]
   done
 
-  EXPECTED=`workseconds_from_calendar_days $MONTHLY_WORK_DAYS`
-  TOTALDIFF=`diff $TOTAL $EXPECTED`
+  WORK=`logged_workseconds_from_day $DATE`
+
+  if is_weekday $DATE
+  then
+    DAY_COUNT=$[$DAY_COUNT + 1]
+    DIFF=`diff $WORK $EXPECTED_WEEKDAYS_WORK`
+    echo -n " `add_leading_zero $DAY_COUNT`  "
+    echo " $DATE   `pretty_print $WORK`  `pretty_print $DIFF`"
+  elif [ "$WORK" -ne "0" ]
+  then
+    DIFF=`diff $WORK $EXPECTED_WEEKEND_WORK`
+    echo -n "     "
+    echo " $DATE   `pretty_print $WORK`  `pretty_print $DIFF`"
+  fi
+
+  TOTAL=$[$TOTAL + $WORK]
+  TOTAL_DIFF=$[$TOTAL_DIFF + $DIFF]
 
   echo "----+------------+------------+-----------"
-  echo "                   `pretty_print $TOTAL`  `pretty_print $TOTALDIFF`"
+  echo "      TOTAL        `pretty_print $TOTAL`  `pretty_print $TOTAL_DIFF`"
   echo "----+------------+------------+-----------"
 
-  TODAY=`logged_workseconds_from_day $DATE`
-  DIFF=`diff $TODAY $(workseconds_from_calendar_days 1)`
+  EXPECTED_MONTH_WORK=`workseconds_from_calendar_days $MONTHLY_WORK_DAYS`
+  ABSOLUTE_DIFF=`diff $TOTAL $EXPECTED_MONTH_WORK`
 
-  echo "      Today        `pretty_print $TODAY`  `pretty_print $DIFF`"
-  echo "----+------------+------------+-----------"
-
-  TOTAL=$[$TOTAL + $TODAY]
-  TOTALDIFF=$[$TOTALDIFF + $TODAY]
-
-  echo "      TOTAL        `pretty_print $TOTAL`  `pretty_print $TOTALDIFF`"
+  echo "      ABSOLUTE                 `pretty_print $ABSOLUTE_DIFF`"
   echo "----+------------+------------+-----------"
 }
 
