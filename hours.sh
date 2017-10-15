@@ -247,7 +247,7 @@ month() {
   YEAR=`check_year ${2:-$YEAR}`
 
   echo "----+------------+------------+-----------"
-  echo "      date         work-hours   over-time "
+  echo " no   date         work-hours   over-time "
   echo "----+------------+------------+-----------"
 
   EXPECTED_WEEKDAYS_WORK=$(workseconds_from_calendar_days 1)
