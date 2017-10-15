@@ -199,6 +199,11 @@ logged_workseconds_from_day() {
   egrep "^$1\s+$TIME_REGEX\s+$ACTION_REGEX$" "`month_file`" | total
 }
 
+is_weekday() {
+  DAY_OF_WEEK="`date -d $1 +%u`"
+  test "$DAY_OF_WEEK" -lt 6
+}
+
 # <commands>
 
 day() {
@@ -241,40 +246,53 @@ month() {
   MONTH=`check_month ${1:-$MONTH}`
   YEAR=`check_year ${2:-$YEAR}`
 
-  echo "------------+------------+-----------"
-  echo " date         work-hours   over-time"
-  echo "------------+------------+-----------"
+  echo "----+------------+------------+-----------"
+  echo "      date         work-hours   over-time "
+  echo "----+------------+------------+-----------"
+
+  EXPECTED_WEEKDAYS_WORK=$(workseconds_from_calendar_days 1)
+  EXPECTED_WEEKEND_WORK=0
 
   DAY_COUNT=0
   TOTAL=0
+  TOTAL_DIFF=0
+
   for DAY in $(cut -d" " -f1 "`month_file`" | grep -v $DATE | sort | uniq)
   do
     WORK=`logged_workseconds_from_day $DAY`
-    DIFF=`diff $WORK $(workseconds_from_calendar_days 1)`
-    echo " $DAY   `pretty_print $WORK`  `pretty_print $DIFF`"
+    if is_weekday $DAY
+    then
+      DAY_COUNT=$[$DAY_COUNT + 1]
+      DIFF=`diff $WORK $EXPECTED_WEEKDAYS_WORK`
+      echo -n " `add_leading_zero $DAY_COUNT`  "
+    else
+      DIFF=`diff $WORK $EXPECTED_WEEKEND_WORK`
+      echo -n "     "
+    fi
 
-    DAY_COUNT=$[$DAY_COUNT+1]
+    echo " $DAY   `pretty_print $WORK`  `pretty_print $DIFF`"
     TOTAL=$[$TOTAL + $WORK]
+    TOTAL_DIFF=$[$TOTAL_DIFF + $DIFF]
   done
 
   EXPECTED=`workseconds_from_calendar_days $MONTHLY_WORK_DAYS`
   TOTALDIFF=`diff $TOTAL $EXPECTED`
 
-  echo "------------+------------+-----------"
-  echo "              `pretty_print $TOTAL`  `pretty_print $TOTALDIFF`"
-  echo "------------+------------+-----------"
+  echo "----+------------+------------+-----------"
+  echo "                   `pretty_print $TOTAL`  `pretty_print $TOTALDIFF`"
+  echo "----+------------+------------+-----------"
 
   TODAY=`logged_workseconds_from_day $DATE`
   DIFF=`diff $TODAY $(workseconds_from_calendar_days 1)`
 
-  echo " Today        `pretty_print $TODAY`  `pretty_print $DIFF`"
-  echo "------------+------------+-----------"
+  echo "      Today        `pretty_print $TODAY`  `pretty_print $DIFF`"
+  echo "----+------------+------------+-----------"
 
   TOTAL=$[$TOTAL + $TODAY]
   TOTALDIFF=$[$TOTALDIFF + $TODAY]
 
-  echo " TOTAL        `pretty_print $TOTAL`  `pretty_print $TOTALDIFF`"
-  echo "------------+------------+-----------"
+  echo "      TOTAL        `pretty_print $TOTAL`  `pretty_print $TOTALDIFF`"
+  echo "----+------------+------------+-----------"
 }
 
 log() {
