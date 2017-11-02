@@ -204,6 +204,13 @@ is_weekday() {
   test "$DAY_OF_WEEK" -lt 6
 }
 
+is_current_month() {
+  test $1 == `date +%m`
+}
+is_current_year() {
+  test $1 == `date +%Y`
+}
+
 # <commands>
 
 day() {
@@ -277,17 +284,20 @@ month() {
 
   WORK=`logged_workseconds_from_day $DATE`
 
-  if is_weekday $DATE
+  if is_current_month $MONTH && is_current_year $YEAR
   then
-    DAY_COUNT=$[$DAY_COUNT + 1]
-    DIFF=`diff $WORK $EXPECTED_WEEKDAYS_WORK`
-    echo -n " `add_leading_zero $DAY_COUNT`  "
-    echo " $DATE   `pretty_print $WORK`  `pretty_print $DIFF`"
-  elif [ "$WORK" -ne "0" ]
-  then
-    DIFF=`diff $WORK $EXPECTED_WEEKEND_WORK`
-    echo -n "     "
-    echo " $DATE   `pretty_print $WORK`  `pretty_print $DIFF`"
+    if is_weekday $DATE
+    then
+      DAY_COUNT=$[$DAY_COUNT + 1]
+      DIFF=`diff $WORK $EXPECTED_WEEKDAYS_WORK`
+      echo -n " `add_leading_zero $DAY_COUNT`  "
+      echo " $DATE   `pretty_print $WORK`  `pretty_print $DIFF`"
+    elif [ "$WORK" -ne "0" ]
+    then
+      DIFF=`diff $WORK $EXPECTED_WEEKEND_WORK`
+      echo -n "     "
+      echo " $DATE   `pretty_print $WORK`  `pretty_print $DIFF`"
+    fi
   fi
 
   TOTAL=$[$TOTAL + $WORK]
