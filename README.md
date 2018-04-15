@@ -8,7 +8,7 @@ Worklog is a single-script program. Just fetch it from Github.
 
 ```
 # assuming that ~/bin direcotry exists
-wget https://raw.githubusercontent.com/muroc/worklog/master/hours.sh \
+wget https://raw.githubusercontent.com/mchalapuk/worklog/master/hours.sh \
  --output-document ~/bin/hours
 chmod +x ~/bin/hours
 ```
